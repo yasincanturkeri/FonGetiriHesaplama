@@ -1,13 +1,14 @@
-import yfinance as yf
-import pandas_market_calendars as mcal
-import requests
 import datetime
+import yfinance as yf
+import requests
+import pandas as pd
+import traceback
+import sys
 
-# AYARLAR
+
+# --- AYARLAR ---
 TOKEN = '8985851282:AAHz4O3Ygyp9herlBfq0JSRG3Ps3tGFxVZ8' 
 CHAT_ID = '1402340669' 
-
-# PORTFÖY (Hisse Kodu: Ağırlık)
 PORTFOY = {
     "DSTKF.IS": 0.1771,
     "OZATD.IS": 0.1716,
@@ -26,90 +27,124 @@ PORTFOY = {
     "CWENE.IS": 0.0003,
     "T3B.IS":   0.0002
 }
-# ==========================================================
+BENCHMARKS = {
+    "BIST 100": "XU100.IS",
+    "ALTIN": "GC=F",
+    "DOLAR": "USDTRY=X",
+    "BIST BANKA": "XBANK.IS"
+}
 
-def is_borsa_acik_mi():
-    try:
-        now = datetime.datetime.now()
-        current_hour = now.hour
-        current_weekday = now.weekday() # Pazartesi=0, Pazar=6
-
-        # 1. HAFTA İÇİ KONTROLÜ
-        # 0=Pazartesi, 4=Cuma. 5 (Cumartesi) ve 6 (Pazar) hariç tutulur.
-        if current_weekday >= 5:
-            return False
-
-        # 2. SAAT ARALIĞI KONTROLÜ (12:00 - 19:00)
-        # 12:00 dahil, 19:00 dahil değil (yani 18:59'a kadar).
-        # Eğer 19:00'da da mesaj gelsin istersen (12 <= current_hour <= 19) yapabilirsin.
-        if not (12 <= current_hour < 19):
-            return False
-
-        # 3. TAKVİM (TATİL) KONTROLÜ
-        import pandas_market_calendars as mcal
-        bist = mcal.get_calendar('XIDX') 
-        schedule = bist.schedule(start_date=now.date(), end_date=now.date())
-        if schedule.empty:
-            return False
-            
-        return True
-    except Exception as e:
-        print(f"Kontrol sırasında hata: {e}")
-        return False
-
-
-def get_portfolio_return():
+# --- FONKSİYONLAR ---
+def get_portfolio_summary_basic():
+    """Rutin Mod: Sadece toplam getiriyi döner"""
     toplam_getiri = 0
-    basarili_hisse_sayisi = 0
-    
     for sembol, agirlik in PORTFOY.items():
         try:
             ticker = yf.Ticker(sembol)
             hist = ticker.history(period="2d")
-            
+            if len(hist) < 2: continue
+            change = (hist['Close'].iloc[-1] - hist['Close'].iloc[-2]) / hist['Close'].iloc[-2]
+            toplam_getiri += change * agirlik
+        except: continue
+    return toplam_getiri * 100
+
+def get_benchmark_returns():
+    """Endeks değişimlerini döner"""
+    bench_report = []
+    for name, symbol in BENCHMARKS.items():
+        try:
+            ticker = yf.Ticker(symbol)
+            hist = ticker.history(period="2d")
             if len(hist) < 2:
+                bench_report.append(f"❓ {name}: Veri yok")
                 continue
+            change = ((hist['Close'].iloc[-1] - hist['Close'].iloc[-2]) / hist['Close'].iloc[-2]) * 100
+            icon = "🟢" if change >= 0 else "🔴"
+            bench_report.append(f"{icon} {name}: `{change:.2f}%`")
+        except:
+            bench_report.append(f"❓ {name}: Hata")
+    return "\n".join(bench_report)
+
+def get_detailed_portfolio_info():
+    """Özet Mod: Detaylı analiz döner"""
+    toplam_getiri = 0
+    hisse_detaylari = []
+
+    for sembol, agirlik in PORTFOY.items():
+        try:
+            ticker = yf.Ticker(sembol)
+            hist = ticker.history(period="2d")
+            if len(hist) < 2: continue
+            guncel, gecmis = hist['Close'].iloc[-1], hist['Close'].iloc[-2]
+            hisse_getirisi = (guncel - gecmis) / gecmis
+            toplam_getiri += hisse_getirisi * agirlik
             
-            guncel_fiyat = hist['Close'].iloc[-1]
-            gecmis_fiyat = hist['Close'].iloc[-2]
-            
-            # Getiri: ((Yeni - Eski) / Eski) * Ağırlık
-            getiri = ((guncel_fiyat - gecmis_fiyat) / gecmis_fiyat) * agirlik
-            toplam_getiri += getiri
-            basarili_hisse_sayisi += 1
-            
-        except Exception as e:
-            print(f"{sembol} hatası: {e}")
-            continue
-            
-    return toplam_getiri, basarili_hisse_sayisi
+            hisse_detaylari.append({
+                'sembol': sembol.replace(".IS", ""),
+                'yuzde': hisse_getirisi * 100,
+                'portfoy_katkisi': hisse_getirisi * agirlik
+            })
+        except: continue
+
+    if not hisse_detaylari: 
+        return 0, "⚠️ Veri çekilemedi."
+
+    # Portföye en çok katkı sağlayan ve en çok zarar ettiren hisseler
+    en_iyi = max(hisse_detaylari, key=lambda x: x['portfoy_katkisi'])
+    en_kotu = min(hisse_detaylari, key=lambda x: x['portfoy_katkisi'])
+
+    detay_msg = (
+        f"🚀 *En İyi Katkı:* {'🟢' if en_iyi['yuzde'] >= 0 else '🔴'} {en_iyi['sembol']}: `{en_iyi['yuzde']:.2f}%`\n"
+        f"⚠️ *En Kötü Katkı:* {'🟢' if en_kotu['yuzde'] >= 0 else '🔴'} {en_kotu['sembol']}: `{en_kotu['yuzde']:.2f}%`"
+    )
+    return toplam_getiri * 100, detay_msg
 
 def send_telegram(msg):
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={CHAT_ID}&text={msg}&parse_mode=Markdown"
     try:
-        requests.get(url)
-    except:
-        pass
-        
+        requests.get(url, timeout=10)
+    except Exception as e:
+        print(f"Telegram gönderilemedi: {e}")
+
+# --- ANA ÇALIŞTIRICI ---
 if __name__ == "__main__":
     try:
-        # 1. Borsa açık mı kontrol et
-        if is_borsa_acik_mi():
-            getiri_oran, sayi = get_portfolio_return()
+        now = datetime.datetime.now()
+        hour = now.hour
+        print(f"Sistem başlatıldı. Mevcut saat: {now.strftime('%H:%M:%S')}")
+
+        # SENARYO A: Saat 19:00 (Detaylı Rapor + Endeksler)
+
+            print("Mod: DETAYLI ÖZET MODU aktif.")
+            getiri, detaylar = get_detailed_portfolio_info()
+            endeksler = get_benchmark_returns()
             
-            if sayi > 0:
-                mesaj = (
-                    f"📊 *Günlük Portföy Raporu*\n\n"
-                    f"📈 *Toplam Getiri:* `%{getiri_oran*100:.2f}`\n"
-                    f"🕒 *Saat:* {datetime.datetime.now().strftime('%H:%M')}\n"
-                    f"✅ *Hisse Sayısı:* {sayi}"
-                )
-                send_telegram(mesaj)
-            else:
-                print("Hesaplama yapıldı ancak hisse verisi çekilemedi.")
-        else:
-            print("Şu an borsa açık değil veya saat aralığında değil. İşlem yapılmadı.")
-            
+            mesaj = (
+                f"📊 *GÜNLÜK KAPANIŞ RAPORU*\n\n"
+                f"📈 *Toplam Portföy:* `{getiri:.2f}%`\n\n"
+                f"{detaylar}\n\n"
+                f"🏛️ *PİYASA DURUMU*\n"
+                f"{endeksler}\n\n"
+                f"🕒 *Saat:* {now.strftime('%H:%M')}"
+            )
+            send_telegram(mesaj)
+            print("Detaylı rapor başarıyla gönderildi.")
+
+        # SENARYO B: Saat 12:00 ile 18:59 arası (Rutin Mod)
+
+            print("Mod: RUTİN DURUM MODU aktif.")
+            getiri_oran = get_portfolio_summary_basic()
+            mesaj = f"🕒 *Anlık Portföy Durumu*\n📈 Toplam Getiri: `{getiri_oran:.2f}%`"
+            send_telegram(mesaj)
+            print("Rutin rapor başarıyla gönderildi.")
+
+        # SENARYO C: Diğer saatler
+
+
     except Exception as e:
-        # Beklenmedik bir hata olursa GitHub loglarında nedenini görebilirsin
-        print(f"Kritik Hata: {e}")
+        error_trace = traceback.format_exc()
+        print(f"❌ KRİTİK HATA OLUŞTU:\n{error_trace}")
+        try:
+            send_telegram(f"⚠️ *BOT ÇÖKTÜ!*\n\n`{error_trace[-500:]}`") 
+        except:
+            print("Telegram üzerinden hata gönderilemedi.")
