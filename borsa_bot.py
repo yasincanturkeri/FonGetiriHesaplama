@@ -86,7 +86,7 @@ def send_telegram(msg):
 if __name__ == "__main__":
     try:
         now = datetime.datetime.now()
-        is_weekend = 1 
+        is_weekend = 0
 
         if is_weekend:
             print(f"Saat: {now.strftime('%H:%M:%S')} - Bugün hafta sonu. Bot uyuyor.")
