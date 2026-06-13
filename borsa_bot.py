@@ -110,28 +110,44 @@ def send_telegram(msg):
 if __name__ == "__main__":
     try:
         now = datetime.datetime.now()
-        hour = now.hour
-        print(f"Sistem başlatıldı. Mevcut saat: {now.strftime('%H:%M:%S')}")
-        print("Mod: DETAYLI ÖZET MODU aktif.")
-        getiri, detaylar = get_detailed_portfolio_info()
-        endeksler = get_benchmark_returns()
-            
-        mesaj = (
-            f"📊 *GÜNLÜK KAPANIŞ RAPORU*\n\n"
-            f"📈 *Toplam Portföy:* `{getiri:.2f}%`\n\n"
-            f"{detaylar}\n\n"
-            f"🏛️ *PİYASA DURUMU*\n"
-            f"{endeksler}\n\n"
-            f"🕒 *Saat:* {now.strftime('%H:%M')}"
-        )
-        send_telegram(mesaj)
-        print("Detaylı rapor başarıyla gönderildi.")
+        # weekday() -> Pazartesi: 0, Cumartesi: 5, Pazar: 6
+        is_weekend = 0 
 
-        print("Mod: RUTİN DURUM MODU aktif.")
-        getiri_oran = get_portfolio_summary_basic()
-        mesaj = f"🕒 *Anlık Portföy Durumu*\n📈 Toplam Getiri: `{getiri_oran:.2f}%`"
-        send_telegram(mesaj)
-        print("Rutin rapor başarıyla gönderildi.")
+        if is_weekend:
+            print(f"Saat: {now.strftime('%H:%M:%S')} - Bugün hafta sonu. Bot uyuyor.")
+            sys.exit()
+
+        hour = 19
+        print(f"Sistem başlatıldı. Mevcut saat: {now.strftime('%H:%M:%S')}")
+
+        # SENARYO A: Saat 19:00 (Detaylı Rapor + Endeksler)
+        if hour == 19:
+            print("Mod: DETAYLI ÖZET MODU aktif.")
+            getiri, detaylar = get_detailed_portfolio_info()
+            endeksler = get_benchmark_returns()
+            
+            mesaj = (
+                f"📊 *GÜNLÜK KAPANIŞ RAPORU*\n\n"
+                f"📈 *Toplam Portföy:* `{getiri:.2f}%`\n\n"
+                f"{detaylar}\n\n"
+                f"🏛️ *PİYASA DURUMU*\n"
+                f"{endeksler}\n\n"
+                f"🕒 *Saat:* {now.strftime('%H:%M')}"
+            )
+            send_telegram(mesaj)
+            print("Detaylı rapor başarıyla gönderildi.")
+
+        # SENARYO B: Saat 12:00 ile 18:59 arası (Rutin Mod)
+        elif 12 <= hour < 19:
+            print("Mod: RUTİN DURUM MODU aktif.")
+            getiri_oran = get_portfolio_summary_basic()
+            mesaj = f"🕒 *Anlık Portföy Durumu*\n📈 Toplam Getiri: `{getiri_oran:.2f}%`"
+            send_telegram(mesaj)
+            print("Rutin rapor başarıyla gönderildi.")
+
+        # SENARYO C: Diğer saatler
+        else:
+            print(f"Mod: BEKLEME. (Saat {hour}, rapor saati değil)")
 
     except Exception as e:
         error_trace = traceback.format_exc()
