@@ -86,16 +86,13 @@ def send_telegram(msg):
 if __name__ == "__main__":
     try:
         now = datetime.datetime.now()
-        is_weekend = 0
+        is_weekend = now.weekday() >= 5
 
         if is_weekend:
             print(f"Saat: {now.strftime('%H:%M:%S')} - Bugün hafta sonu. Bot uyuyor.")
             sys.exit()
 
-        # --- TEST MODU AYARI ---
-        # Gerçek kullanım için alttaki satırı: hour = now.hour  yapmalısın.
-        hour = 19  # <--- TEST İÇİN 19 YAPTIM
-        
+        hour = now.hour
         print(f"Sistem başlatıldı. Mevcut saat: {now.strftime('%H:%M:%S')} (Simüle edilen saat: {hour})")
 
         if hour == 19:
@@ -103,7 +100,7 @@ if __name__ == "__main__":
             getiri, detaylar = get_detailed_portfolio_info()
             endeksler = get_benchmark_returns()
             mesaj = (
-                f"📊 *GÜNLÜK KAPANISH RAPORU*\n\n"
+                f"📊 *GÜNLÜK KAPANIŞ RAPORU*\n\n"
                 f"📈 *Toplam Portföy:* `{getiri:.2f}%`\n\n"
                 f"{detaylar}\n\n"
                 f"🏛️ *PİYASA DURUMU*\n"
