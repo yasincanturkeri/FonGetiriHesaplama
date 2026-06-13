@@ -1,26 +1,26 @@
-name: Borsa Takip Otomasyonu
+name: Borsa Takip Botu
 
 on:
   schedule:
-    # Her saat başı çalışır (UTC saatine göre)
-    - cron: '0 * * * *'
-  workflow_dispatch: # Bunu manuel olarak test edebilmen için ekledik
+    # Her saat başı çalışır (00:00, 01:00, 02:00...)
+    - cron: '0 * * * *' 
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Repo'yu Çek
-        uses: actions/checkout@v2
+      - name: Kodları Çek
+        uses: actions/checkout@v4
 
-      - name: Python Kur
-        uses: actions/setup-python@v2
+      - name: Python Kurulumu
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.11'
 
-      - name: Kütüphaneleri Kur
+      - name: Gerekli Kütüphaneleri Yükle
         run: |
-          pip install -r requirements.txt
+          pip install yfinance pandas_market_calendars requests
 
       - name: Kodu Çalıştır
         run: python borsa_bot.py
