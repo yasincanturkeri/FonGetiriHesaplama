@@ -2,25 +2,27 @@ name: Borsa Takip Botu
 
 on:
   schedule:
-    # Her saat başı çalışır (00:00, 01:00, 02:00...)
-    - cron: '0 * * * *' 
+    # Saat 09:00 ile 16:00 arası her saat başı (Rutin Mod için)
+    - cron: '0 9-16 * * 1-5'
+    # Saat 16:00'da (Türkiye 19:00'da) tek seferlik (Özet Mod için)
+    - cron: '0 16 * * 1-5'
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Kodları Çek
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Python Kurulumu
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Gerekli Kütüphaneleri Yükle
+      - name: Install dependencies
         run: |
-          pip install yfinance pandas_market_calendars requests
+          pip install yfinance requests pandas PyYAML
 
-      - name: Kodu Çalıştır
+      - name: Run Bot
         run: python borsa_bot.py
