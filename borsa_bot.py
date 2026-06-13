@@ -112,34 +112,26 @@ if __name__ == "__main__":
         now = datetime.datetime.now()
         hour = now.hour
         print(f"Sistem başlatıldı. Mevcut saat: {now.strftime('%H:%M:%S')}")
-
-        # SENARYO A: Saat 19:00 (Detaylı Rapor + Endeksler)
-
-            print("Mod: DETAYLI ÖZET MODU aktif.")
-            getiri, detaylar = get_detailed_portfolio_info()
-            endeksler = get_benchmark_returns()
+        print("Mod: DETAYLI ÖZET MODU aktif.")
+        getiri, detaylar = get_detailed_portfolio_info()
+        endeksler = get_benchmark_returns()
             
-            mesaj = (
-                f"📊 *GÜNLÜK KAPANIŞ RAPORU*\n\n"
-                f"📈 *Toplam Portföy:* `{getiri:.2f}%`\n\n"
-                f"{detaylar}\n\n"
-                f"🏛️ *PİYASA DURUMU*\n"
-                f"{endeksler}\n\n"
-                f"🕒 *Saat:* {now.strftime('%H:%M')}"
-            )
-            send_telegram(mesaj)
-            print("Detaylı rapor başarıyla gönderildi.")
+        mesaj = (
+            f"📊 *GÜNLÜK KAPANIŞ RAPORU*\n\n"
+            f"📈 *Toplam Portföy:* `{getiri:.2f}%`\n\n"
+            f"{detaylar}\n\n"
+            f"🏛️ *PİYASA DURUMU*\n"
+            f"{endeksler}\n\n"
+            f"🕒 *Saat:* {now.strftime('%H:%M')}"
+        )
+        send_telegram(mesaj)
+        print("Detaylı rapor başarıyla gönderildi.")
 
-        # SENARYO B: Saat 12:00 ile 18:59 arası (Rutin Mod)
-
-            print("Mod: RUTİN DURUM MODU aktif.")
-            getiri_oran = get_portfolio_summary_basic()
-            mesaj = f"🕒 *Anlık Portföy Durumu*\n📈 Toplam Getiri: `{getiri_oran:.2f}%`"
-            send_telegram(mesaj)
-            print("Rutin rapor başarıyla gönderildi.")
-
-        # SENARYO C: Diğer saatler
-
+        print("Mod: RUTİN DURUM MODU aktif.")
+        getiri_oran = get_portfolio_summary_basic()
+        mesaj = f"🕒 *Anlık Portföy Durumu*\n📈 Toplam Getiri: `{getiri_oran:.2f}%`"
+        send_telegram(mesaj)
+        print("Rutin rapor başarıyla gönderildi.")
 
     except Exception as e:
         error_trace = traceback.format_exc()
