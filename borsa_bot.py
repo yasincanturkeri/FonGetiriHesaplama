@@ -90,7 +90,7 @@ def send_telegram(msg):
         requests.get(url)
     except:
         pass
-
+        
 if __name__ == "__main__":
     # TEST MODU: Saat veya gün kontrolü YAPMIYOR.
     # Sadece hesapla ve Telegram'a gönder.
@@ -98,10 +98,13 @@ if __name__ == "__main__":
         print("Test başlatılıyor... (Saat/Gün kontrolü devre dışı)")
         
         getiri_oran, sayi = get_portfolio_return()
-        mesaj = f"TEST MESAJI - Portföy: %{getiri_oran:.2f} ({sayi} hisse)"
         
-        print(f"Hesaplama başarılı: {getiri_oran}")
-        send_telegram(mesaj)
+        if sayi > 0:
+            mesaj = f"📊 *Günlük Portföy Raporu*\n\n" \
+                    f"📈 *Toplam Getiri:* `%{getiri_oran*100:.2f}`\n" \
+                    f"🕒 *Saat:* {datetime.datetime.now().strftime('%H:%M')}\n" \
+                    f"✅ *Hisse Sayısı:* {sayi}"
+            send_telegram(mesaj)
         print("Mesaj başarıyla gönderildi!")
         
     except Exception as e:
