@@ -93,6 +93,8 @@ def send_telegram(msg):
         
 if __name__ == "__main__":
     try:
+        # 1. Borsa açık mı kontrol et
+        if is_borsa_acik_mi():
             getiri_oran, sayi = get_portfolio_return()
             
             if sayi > 0:
@@ -105,7 +107,9 @@ if __name__ == "__main__":
                 send_telegram(mesaj)
             else:
                 print("Hesaplama yapıldı ancak hisse verisi çekilemedi.")
-                
+        else:
+            print("Şu an borsa açık değil veya saat aralığında değil. İşlem yapılmadı.")
+            
     except Exception as e:
         # Beklenmedik bir hata olursa GitHub loglarında nedenini görebilirsin
         print(f"Kritik Hata: {e}")
