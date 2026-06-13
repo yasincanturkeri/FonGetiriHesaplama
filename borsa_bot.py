@@ -92,11 +92,7 @@ def send_telegram(msg):
         pass
         
 if __name__ == "__main__":
-    # TEST MODU: Saat veya gün kontrolü YAPMIYOR.
-    # Sadece hesapla ve Telegram'a gönder.
-    try:
-        print("Test başlatılıyor... (Saat/Gün kontrolü devre dışı)")
-        
+    if is_borsa_acik_mi():
         getiri_oran, sayi = get_portfolio_return()
         
         if sayi > 0:
@@ -105,7 +101,5 @@ if __name__ == "__main__":
                     f"🕒 *Saat:* {datetime.datetime.now().strftime('%H:%M')}\n" \
                     f"✅ *Hisse Sayısı:* {sayi}"
             send_telegram(mesaj)
-        print("Mesaj başarıyla gönderildi!")
-        
-    except Exception as e:
-        print(f"Hata oluştu: {e}")
+    else:
+        print("Borsa kapalı.")
