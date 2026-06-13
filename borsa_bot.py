@@ -92,14 +92,20 @@ def send_telegram(msg):
         pass
         
 if __name__ == "__main__":
-    if is_borsa_acik_mi():
-        getiri_oran, sayi = get_portfolio_return()
-        
-        if sayi > 0:
-            mesaj = f"📊 *Günlük Portföy Raporu*\n\n" \
-                    f"📈 *Toplam Getiri:* `%{getiri_oran*100:.2f}`\n" \
-                    f"🕒 *Saat:* {datetime.datetime.now().strftime('%H:%M')}\n" \
+    try:
+            getiri_oran, sayi = get_portfolio_return()
+            
+            if sayi > 0:
+                mesaj = (
+                    f"📊 *Günlük Portföy Raporu*\n\n"
+                    f"📈 *Toplam Getiri:* `%{getiri_oran*100:.2f}`\n"
+                    f"🕒 *Saat:* {datetime.datetime.now().strftime('%H:%M')}\n"
                     f"✅ *Hisse Sayısı:* {sayi}"
-            send_telegram(mesaj)
-    else:
-        print("Borsa kapalı.")
+                )
+                send_telegram(mesaj)
+            else:
+                print("Hesaplama yapıldı ancak hisse verisi çekilemedi.")
+                
+    except Exception as e:
+        # Beklenmedik bir hata olursa GitHub loglarında nedenini görebilirsin
+        print(f"Kritik Hata: {e}")
