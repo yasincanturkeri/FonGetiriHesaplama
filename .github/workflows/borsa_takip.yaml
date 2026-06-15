@@ -3,9 +3,10 @@ name: Borsa Takip Botu
 on:
   schedule:
     # Saat 09:00 ile 16:00 arası her saat başı (TSİ 11:00 - 18:00)
-    - cron: '23 17 * * 1-5'
+    - cron: '25 17 * * 1-5'
     # Saat 16:00'da (TSİ 19:00) tek seferlik Özet Modu
-    - cron: '0 16 * * 1-5'
+    - cron: '0 18 * * 1-5'
+    timezone: 'Europe/Istanbul'
   workflow_dispatch:
 
 jobs:
