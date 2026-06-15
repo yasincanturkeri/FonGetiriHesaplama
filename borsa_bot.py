@@ -14,7 +14,7 @@ try:
         config = yaml.safe_load(f)
     
     TOKEN = config.get('telegram', {}).get('token') or os.environ.get('TELEGRAM_TOKEN')
-    Chat_ID = config.get('telegram', {}).get('chat_id') or os.environ.get('TELEGRAM_CHAT_ID')
+    CHAT_ID = config.get('telegram', {}).get('chat_id') or os.environ.get('TELEGRAM_CHAT_ID')
     PORTFOY = config['portfoy']
     BENCHMARKS = config['benchmarks']
 except Exception as e:
