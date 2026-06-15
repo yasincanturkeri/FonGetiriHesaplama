@@ -1,8 +1,10 @@
 name: Borsa Takip Botu Yeni
 
 on:
-  push:
   workflow_dispatch:
+
+  push:
+
   schedule:
     - cron: "*/15 * * * *"
 
@@ -12,6 +14,7 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
