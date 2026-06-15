@@ -6,14 +6,15 @@ import traceback
 import sys
 import yaml
 import pytz
+import os
 
 # --- CONFIG YÜKLEME ---
 try:
     with open("config.yaml", "r") as f:
         config = yaml.safe_load(f)
     
-    TOKEN = config['telegram']['token']
-    CHAT_ID = config['telegram']['chat_id']
+    telegram_token = config.get('telegram', {}).get('token') or os.environ.get('TELEGRAM_TOKEN')
+    telegram_chat_id = config.get('telegram', {}).get('chat_id') or os.environ.get('TELEGRAM_CHAT_ID')
     PORTFOY = config['portfoy']
     BENCHMARKS = config['benchmarks']
 except Exception as e:
