@@ -2,11 +2,9 @@ name: Borsa Takip Botu
 
 on:
   schedule:
-    # TSİ 11:25 - 18:25 arası her saat başının 25. dakikasında çalışır (Hafta içi)
-    - cron: '30 17 * * 1-5'
+    - cron: '40 17 * * 1-5'
       timezone: 'Europe/Istanbul'
 
-    # TSİ 19:00'da Özet Modu olarak tek seferlik çalışır (Hafta içi)
     - cron: '0 19 * * 1-5'
       timezone: 'Europe/Istanbul'
 
