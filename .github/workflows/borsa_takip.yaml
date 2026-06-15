@@ -3,10 +3,6 @@ name: Borsa Takip Botu
 on:
   schedule:
     - cron: '40 17 * * 1-5'
-      timezone: 'Europe/Istanbul'
-
-    - cron: '0 19 * * 1-5'
-      timezone: 'Europe/Istanbul'
 
   workflow_dispatch:
 
