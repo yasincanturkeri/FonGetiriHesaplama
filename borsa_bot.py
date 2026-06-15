@@ -85,7 +85,8 @@ def send_telegram(msg):
 # --- ANA ÇALIŞTIRICI ---
 if __name__ == "__main__":
     try:
-        now = datetime.datetime.now()
+        tsi = pytz.timezone('Europe/Istanbul')
+        now = datetime.datetime.now(tsi)
         is_weekend = now.weekday() >= 5
 
         if is_weekend:
@@ -95,7 +96,7 @@ if __name__ == "__main__":
         hour = now.hour
         print(f"Sistem başlatıldı. Mevcut saat: {now.strftime('%H:%M:%S')} (Simüle edilen saat: {hour})")
 
-        if hour == 16:
+        if hour == 19:
             print("Mod: DETAYLI ÖZET MODU aktif.")
             getiri, detaylar = get_detailed_portfolio_info()
             endeksler = get_benchmark_returns()
@@ -110,7 +111,7 @@ if __name__ == "__main__":
             send_telegram(mesaj)
             print("Detaylı rapor başarıyla gönderildi.")
 
-        elif 8 <= hour < 16:
+        elif 11 <= hour < 19:
             print("Mod: RUTİN DURUM MODU aktif.")
             getiri_oran = get_portfolio_summary_basic()
             mesaj = f"🕒 *Anlık Portföy Durumu*\n📈 Toplam Getiri: `{getiri_oran:.2f}%`"
