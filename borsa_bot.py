@@ -98,7 +98,7 @@ if __name__ == "__main__":
         hour = now.hour
         print(f"Sistem başlatıldı. Mevcut saat: {now.strftime('%H:%M:%S')} (Simüle edilen saat: {hour})")
 
-        if hour == 19:
+        if hour => 19:
             print("Mod: DETAYLI ÖZET MODU aktif.")
             getiri, detaylar = get_detailed_portfolio_info()
             endeksler = get_benchmark_returns()
