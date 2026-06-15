@@ -1,4 +1,4 @@
-name: Borsa Takip Botu Yeni
+name: Borsa Takip Botu
 
 on:
   workflow_dispatch:
@@ -6,10 +6,10 @@ on:
   push:
 
   schedule:
-    - cron: "*/15 * * * *"
+  - cron: '*/15 * * * *'
 
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
   TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
   TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
 
@@ -24,7 +24,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: '3.11'
 
       - name: Install dependencies
         run: |
