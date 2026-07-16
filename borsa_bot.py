@@ -1,5 +1,5 @@
 import datetime
-import yfinance as yf
+import borsapy as bp  # yfinance yerine borsapy
 import requests
 import pandas as pd
 import traceback
@@ -7,15 +7,6 @@ import sys
 import yaml
 import pytz
 import os
-
-# ============================================
-# 1. PROXY AYARI - Burayı değiştirin!
-# ============================================
-# Çalışan bir proxy adresi bulup aşağıya yazın.
-# Örnek format: "http://123.123.123.123:8080"
-# Ücretsiz proxy bulmak için: https://free-proxy-list.net/ adresini kullanabilirsiniz.
-PROXY = "http://95.3.69.222:8080"   # <--- BURAYI DEĞİŞTİRİN
-# ============================================
 
 # --- CONFIG YÜKLEME ---
 try:
@@ -30,38 +21,29 @@ except Exception as e:
     print(f"❌ Config dosyası yüklenemedi: {e}")
     sys.exit()
 
-# --- YARDIMCI FONKSİYON (Proxy ile veri çeker) ---
+# --- YARDIMCI FONKSİYON (borsapy ile veri çeker) ---
 def get_price_data(symbol, period="5d"):
     """
-    yf.download() kullanarak veri çeker.
-    Proxy desteği eklendi.
+    borsapy'nin download() fonksiyonunu kullanarak veri çeker.
     """
     try:
-        # Proxy'yi kullanarak download et
-        df = yf.download(
-            symbol, 
-            period=period, 
-            progress=False, 
-            auto_adjust=False, 
-            threads=False,
-            proxy=PROXY   # <--- PROXY EKLENDİ
-        )
+        # Sembolün sonundaki .IS'yi kaldır (borsapy .IS istemiyor)
+        clean_symbol = symbol.replace(".IS", "")
+        
+        # borsapy ile veriyi indir
+        df = bp.download([clean_symbol], period=period, progress=False)
+        
+        # Eğer veri boş gelirse tekrar dene
         if df.empty:
-            # auto_adjust=True dene
-            df = yf.download(
-                symbol, 
-                period=period, 
-                progress=False, 
-                auto_adjust=True, 
-                threads=False,
-                proxy=PROXY   # <--- PROXY EKLENDİ
-            )
+            print(f"⚠️ {symbol} için veri boş geldi, tekrar deneniyor...")
+            df = bp.download([clean_symbol], period=period, progress=False)
+            
         return df
     except Exception as e:
         print(f"⚠️ {symbol} indirme hatası: {e}")
         return pd.DataFrame()
 
-# --- FONKSİYONLAR (değişmedi) ---
+# --- FONKSİYONLAR ---
 
 def get_portfolio_summary_basic():
     toplam_getiri = 0
@@ -72,6 +54,7 @@ def get_portfolio_summary_basic():
             print(f"⚠️ {sembol} için yeterli veri yok (gün sayısı: {len(hist)})")
             continue
         
+        # Son iki kapanış fiyatını al
         close_values = hist['Close'].iloc[-2:].values
         change = (close_values[1] - close_values[0]) / close_values[0]
         toplam_getiri += change * agirlik
@@ -143,7 +126,7 @@ def send_telegram(msg):
     except Exception as e:
         print(f"❌ Telegram gönderilemedi: {e}")
 
-# --- ANA ÇALIŞTIRICI (değişmedi) ---
+# --- ANA ÇALIŞTIRICI ---
 if __name__ == "__main__":
     try:
         tsi = pytz.timezone('Europe/Istanbul')
