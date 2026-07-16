@@ -8,6 +8,15 @@ import yaml
 import pytz
 import os
 
+# ============================================
+# 1. PROXY AYARI - Burayı değiştirin!
+# ============================================
+# Çalışan bir proxy adresi bulup aşağıya yazın.
+# Örnek format: "http://123.123.123.123:8080"
+# Ücretsiz proxy bulmak için: https://free-proxy-list.net/ adresini kullanabilirsiniz.
+PROXY = "http://YOUR_PROXY_IP:PORT"   # <--- BURAYI DEĞİŞTİRİN
+# ============================================
+
 # --- CONFIG YÜKLEME ---
 try:
     with open("config.yaml", "r") as f:
@@ -21,24 +30,38 @@ except Exception as e:
     print(f"❌ Config dosyası yüklenemedi: {e}")
     sys.exit()
 
-# --- YARDIMCI FONKSİYON (Veriyi güvenli çeker) ---
+# --- YARDIMCI FONKSİYON (Proxy ile veri çeker) ---
 def get_price_data(symbol, period="5d"):
     """
     yf.download() kullanarak veri çeker.
-    Ticker.history()'e göre çok daha kararlıdır.
+    Proxy desteği eklendi.
     """
     try:
-        # auto_adjust=False ve threads=False ekleyerek hata oranını düşürüyoruz
-        df = yf.download(symbol, period=period, progress=False, auto_adjust=False, threads=False)
+        # Proxy'yi kullanarak download et
+        df = yf.download(
+            symbol, 
+            period=period, 
+            progress=False, 
+            auto_adjust=False, 
+            threads=False,
+            proxy=PROXY   # <--- PROXY EKLENDİ
+        )
         if df.empty:
-            # Bazen auto_adjust=True çalışır, deneyelim
-            df = yf.download(symbol, period=period, progress=False, auto_adjust=True, threads=False)
+            # auto_adjust=True dene
+            df = yf.download(
+                symbol, 
+                period=period, 
+                progress=False, 
+                auto_adjust=True, 
+                threads=False,
+                proxy=PROXY   # <--- PROXY EKLENDİ
+            )
         return df
     except Exception as e:
         print(f"⚠️ {symbol} indirme hatası: {e}")
         return pd.DataFrame()
 
-# --- FONKSİYONLAR ---
+# --- FONKSİYONLAR (değişmedi) ---
 
 def get_portfolio_summary_basic():
     toplam_getiri = 0
@@ -49,7 +72,6 @@ def get_portfolio_summary_basic():
             print(f"⚠️ {sembol} için yeterli veri yok (gün sayısı: {len(hist)})")
             continue
         
-        # Son iki kapanış fiyatını al
         close_values = hist['Close'].iloc[-2:].values
         change = (close_values[1] - close_values[0]) / close_values[0]
         toplam_getiri += change * agirlik
@@ -121,7 +143,7 @@ def send_telegram(msg):
     except Exception as e:
         print(f"❌ Telegram gönderilemedi: {e}")
 
-# --- ANA ÇALIŞTIRICI ---
+# --- ANA ÇALIŞTIRICI (değişmedi) ---
 if __name__ == "__main__":
     try:
         tsi = pytz.timezone('Europe/Istanbul')
