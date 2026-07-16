@@ -14,7 +14,7 @@ import os
 # Çalışan bir proxy adresi bulup aşağıya yazın.
 # Örnek format: "http://123.123.123.123:8080"
 # Ücretsiz proxy bulmak için: https://free-proxy-list.net/ adresini kullanabilirsiniz.
-PROXY = "socks5://212.87.198.96:1080"   # <--- BURAYI DEĞİŞTİRİN
+PROXY = "http://95.3.69.222:8080"   # <--- BURAYI DEĞİŞTİRİN
 # ============================================
 
 # --- CONFIG YÜKLEME ---
