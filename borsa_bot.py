@@ -14,7 +14,7 @@ import os
 # Çalışan bir proxy adresi bulup aşağıya yazın.
 # Örnek format: "http://123.123.123.123:8080"
 # Ücretsiz proxy bulmak için: https://free-proxy-list.net/ adresini kullanabilirsiniz.
-PROXY = "http://93.113.63.11:3128"   # <--- BURAYI DEĞİŞTİRİN
+PROXY = "https://185.22.186.249:1080"   # <--- BURAYI DEĞİŞTİRİN
 # ============================================
 
 # --- CONFIG YÜKLEME ---
