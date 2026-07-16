@@ -8,12 +8,12 @@ import yaml
 import pytz
 import os
 
-# --- USER-AGENT AYARI (Yahoo Finance’in engellemesini aşmak için) ---
+# --- USER-AGENT AYARI (Yahoo Finance'in engellemesini aşmak için) ---
 session = requests.Session()
 session.headers.update({
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
 })
-# set_requests_session satırını kaldırdık!
+yf.set_requests_session(session)
 
 # --- CONFIG YÜKLEME ---
 try:
@@ -28,26 +28,40 @@ except Exception as e:
     print(f"❌ Config dosyası yüklenemedi: {e}")
     sys.exit()
 
+# --- YARDIMCI FONKSİYON (Veriyi güvenli çeker) ---
+def get_price_data(symbol, period="5d"):
+    """
+    yf.download() kullanarak veri çeker.
+    Ticker.history()'e göre çok daha kararlıdır.
+    """
+    try:
+        # auto_adjust=False ve threads=False ekleyerek hata oranını düşürüyoruz
+        df = yf.download(symbol, period=period, progress=False, auto_adjust=False, threads=False)
+        if df.empty:
+            # Bazen auto_adjust=True çalışır, deneyelim
+            df = yf.download(symbol, period=period, progress=False, auto_adjust=True, threads=False)
+        return df
+    except Exception as e:
+        print(f"⚠️ {symbol} indirme hatası: {e}")
+        return pd.DataFrame()
+
 # --- FONKSİYONLAR ---
 
 def get_portfolio_summary_basic():
     toplam_getiri = 0
     basarili_hisse_sayisi = 0
     for sembol, agirlik in PORTFOY.items():
-        try:
-            # Ticker oluştururken session'ı veriyoruz
-            ticker = yf.Ticker(sembol, session=session)
-            hist = ticker.history(period="5d")
-            if len(hist) < 2:
-                print(f"⚠️ {sembol} için yeterli veri yok (sadece {len(hist)} gün)")
-                continue
-            close_values = hist['Close'].iloc[-2:].values
-            change = (close_values[1] - close_values[0]) / close_values[0]
-            toplam_getiri += change * agirlik
-            basarili_hisse_sayisi += 1
-        except Exception as e:
-            print(f"❌ {sembol} hesaplanırken hata: {e}")
+        hist = get_price_data(sembol, period="5d")
+        if hist.empty or len(hist) < 2:
+            print(f"⚠️ {sembol} için yeterli veri yok (gün sayısı: {len(hist)})")
             continue
+        
+        # Son iki kapanış fiyatını al
+        close_values = hist['Close'].iloc[-2:].values
+        change = (close_values[1] - close_values[0]) / close_values[0]
+        toplam_getiri += change * agirlik
+        basarili_hisse_sayisi += 1
+
     if basarili_hisse_sayisi == 0:
         print("⚠️ Hiçbir hisse için veri alınamadı, toplam getiri 0 döndü.")
         return 0.0
@@ -56,45 +70,39 @@ def get_portfolio_summary_basic():
 def get_benchmark_returns():
     bench_report = []
     for name, symbol in BENCHMARKS.items():
-        try:
-            ticker = yf.Ticker(symbol, session=session)
-            hist = ticker.history(period="5d")
-            if len(hist) < 2:
-                bench_report.append(f"❓ {name}: Veri yok")
-                continue
-            close_values = hist['Close'].iloc[-2:].values
-            change = ((close_values[1] - close_values[0]) / close_values[0]) * 100
-            icon = "🟢" if change >= 0 else "🔴"
-            bench_report.append(f"{icon} {name}: `{change:.2f}%`")
-        except Exception as e:
-            print(f"❌ {name} benchmark hatası: {e}")
-            bench_report.append(f"❓ {name}: Hata")
+        hist = get_price_data(symbol, period="5d")
+        if hist.empty or len(hist) < 2:
+            bench_report.append(f"❓ {name}: Veri yok")
+            continue
+        
+        close_values = hist['Close'].iloc[-2:].values
+        change = ((close_values[1] - close_values[0]) / close_values[0]) * 100
+        icon = "🟢" if change >= 0 else "🔴"
+        bench_report.append(f"{icon} {name}: `{change:.2f}%`")
+    
     return "\n".join(bench_report)
 
 def get_detailed_portfolio_info():
     toplam_getiri = 0
     hisse_detaylari = []
+    
     for sembol, agirlik in PORTFOY.items():
-        try:
-            ticker = yf.Ticker(sembol, session=session)
-            hist = ticker.history(period="5d")
-            if len(hist) < 2:
-                print(f"⚠️ {sembol} için detaylı veri yok (gün sayısı: {len(hist)})")
-                continue
-            close_values = hist['Close'].iloc[-2:].values
-            hisse_getirisi = (close_values[1] - close_values[0]) / close_values[0]
-            toplam_getiri += hisse_getirisi * agirlik
-            hisse_detaylari.append({
-                'sembol': sembol.replace(".IS", ""),
-                'yuzde': hisse_getirisi * 100,
-                'portfoy_katkisi': hisse_getirisi * agirlik
-            })
-        except Exception as e:
-            print(f"❌ {sembol} detay hatası: {e}")
+        hist = get_price_data(sembol, period="5d")
+        if hist.empty or len(hist) < 2:
+            print(f"⚠️ {sembol} için detaylı veri yok (gün sayısı: {len(hist)})")
             continue
+        
+        close_values = hist['Close'].iloc[-2:].values
+        hisse_getirisi = (close_values[1] - close_values[0]) / close_values[0]
+        toplam_getiri += hisse_getirisi * agirlik
+        
+        hisse_detaylari.append({
+            'sembol': sembol.replace(".IS", ""),
+            'yuzde': hisse_getirisi * 100,
+            'portfoy_katkisi': hisse_getirisi * agirlik
+        })
 
     if not hisse_detaylari:
-        print("⚠️ Hiçbir hisse için detay verisi alınamadı.")
         return 0, "⚠️ Veri çekilemedi. (Tüm hisseler başarısız)"
 
     en_iyi = max(hisse_detaylari, key=lambda x: x['portfoy_katkisi'])
