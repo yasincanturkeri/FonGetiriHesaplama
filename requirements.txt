@@ -1,4 +1,3 @@
-pip install yfinance --upgrade --no-cache-dir
 requests>=2.31.0
 pandas>=2.0.0
 PyYAML>=6.0
